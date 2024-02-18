@@ -38,7 +38,7 @@ def run_external_script(update, context):
     else:
         user_info = f"Nama: {query.from_user.full_name}\nUser ID: {user_id}\n<a href='https://t.me/{query.from_user.username}'>Link Profil</a>"
         context.bot.send_message(chat_id=CHANNEL_ID, text=user_info, parse_mode="HTML", disable_web_page_preview=True)
-        query.edit_message_text(text="Anda tidak diizinkan untuk memenjalankan bot ini")
+        query.edit_message_text(text="Anda tidak diizinkan untuk menjalankan bot ini")
 
 def stop_external_script(update, context):
     global running_process
