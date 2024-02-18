@@ -115,6 +115,11 @@ with TelegramClient(session_file, api_id, api_hash) as client:
                 
             if 'Kamu memperoleh: 🦄MyLittlePony' in event.raw_text:
                 mp += 1
+
+            if 'Kamu memutar SlotMachine 10x' in event.raw_text:
+                await asyncio.sleep(2)
+                await event.click(1, 0)
+                return
                 
                 
             elif 'Ada tujuh jenis ikan' in event.raw_text:
@@ -136,11 +141,6 @@ with TelegramClient(session_file, api_id, api_hash) as client:
                 await event.respond(cmd)
                 return
                         
-            elif 'Kamu memutar SlotMachine 10x' in event.raw_text:
-                await asyncio.sleep(2)
-                await event.click(1, 0)
-                return
-            
             elif 'Koin untuk' in event.raw_text:
                 if mpm == '1':
                     await asyncio.sleep(2)
