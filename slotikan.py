@@ -84,6 +84,11 @@ with TelegramClient(session_file, api_id, api_hash) as client:
                 cv_match = re.search(r'(\d+)\s*🏵', event.raw_text)
                 if cv_match:
                     cv += int(cv_match.group(1))
+                    
+            if 'Kamu memutar SlotMachine 10x' in event.raw_text:
+                await asyncio.sleep(2)
+                await event.click(1, 0)
+                return
 
             elif 'Ada tujuh jenis ikan' in event.raw_text:
                 await asyncio.sleep(2)
@@ -102,11 +107,6 @@ with TelegramClient(session_file, api_id, api_hash) as client:
             elif 'Berhasil menambahkan gelar' in event.raw_text:
                 await asyncio.sleep(2)
                 await event.respond(cmd)
-                return
-
-            elif 'Kamu memutar SlotMachine 10x' in event.raw_text:
-                await asyncio.sleep(2)
-                await event.click(1, 0)
                 return
 
             elif 'Koin untuk' in event.raw_text:
