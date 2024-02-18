@@ -1,14 +1,18 @@
 import logging
+import os
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler
 import subprocess
+from dotenv import load_dotenv
+
+load_dotenv()
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 allowed_users = [5199147926] 
 
-TOKEN = "6479661336:AAHJUeG5b-RQW8MACCgRKZnpyTUQCWwx7KM"
+TOKEN = os.getenv("TOKEN")
 
 CHANNEL_ID = -1002091418219
 
@@ -51,11 +55,11 @@ def stop_external_script(update, context):
         logger.warning("Bot sedang tidak di jalankan")
 
 def main():
-    updater = Updater(TOKEN, use_context=True)
+    updater = Updater(TOKEN.strip(), use_context=True)
     dp = updater.dispatcher
     
     dp.add_handler(CommandHandler("start", start))
-    
+     
     dp.add_handler(CallbackQueryHandler(run_external_script))
     
     dp.add_handler(CommandHandler("stop", stop_external_script))
