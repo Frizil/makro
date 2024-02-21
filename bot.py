@@ -45,13 +45,17 @@ def run_external_script(update, context):
 
 def stop_external_script(update, context):
     global running_process
-    if running_process is not None:
-        running_process.terminate()
-        update.message.reply_text("Bot telah dihentikan")
-        logger.info("Skrip eksternal dihentikan")
+    user_id = update.effective_user.id
+    if user_id in allowed_users:
+        if running_process is not None:
+            running_process.terminate()
+            update.message.reply_text("Bot telah dihentikan")
+            logger.info("Skrip eksternal dihentikan")
+        else:
+            update.message.reply_text("Bot sedang tidak dijalankan")
+            logger.warning("Bot sedang tidak dijalankan")
     else:
-        update.message.reply_text("Bot sedang tidak dijalankan")
-        logger.warning("Bot sedang tidak dijalankan")
+        update.message.reply_text("Anda tidak memiliki izin untuk menghentikan bot.")
         
 
 def main():
