@@ -15,7 +15,7 @@ session_file = os.getenv("SESSION_FILE")
 cmd = '/th_SlotMachine_SevenFish'
 cmd1 = '/th_SlotMachine_add'
 bot = 'KampungMaifamX4Bot'
-invest = '/invest_Helikopter_beli_100'
+invest = '/invest_JetPribadi_beli_100'
 ch = 'inMaifam'
 
 jackpot = 0
