@@ -16,7 +16,8 @@ CHANNEL_ID = -1002091418219
 running_process = None
 
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()
+dp.setup(bot)
 
 async def start(message: types.Message):
     user_id = message.from_user.id
