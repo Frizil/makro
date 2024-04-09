@@ -2,7 +2,7 @@ import os
 import subprocess
 from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext, MessageHandler, Filters
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext, MessageHandler
 import logging
 
 # Load token from .env file
@@ -83,6 +83,10 @@ def run_script(message, context, script_name):
         except FileNotFoundError:
             message.reply_text("File script tidak ditemukan")
 
+# Handler for non-command messages (optional)
+def message_handler(update, context):
+    update.message.reply_text("Maaf, saya hanya menjawab perintah /start dan /stop.")
+
 # Add handlers to dispatcher
 start_handler = CommandHandler('start', start)
 dispatcher.add_handler(start_handler)
@@ -91,5 +95,9 @@ stop_handler = CommandHandler('stop', stop)
 dispatcher.add_handler(stop_handler)
 
 dispatcher.add_handler(CallbackQueryHandler(button))
+
+# Add message handler to handle non-command messages
+message_handler = MessageHandler(Filters.text & (~Filters.command), message_handler)
+dispatcher.add_handler(message_handler)
 
 updater.start_polling()
