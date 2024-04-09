@@ -3,8 +3,6 @@ import os
 import subprocess
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
-from aiogram.dispatcher.filters import Command
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
@@ -19,7 +17,6 @@ running_process = None
 
 bot = Bot(token=TOKEN)
 dp = Dispatcher(bot)
-dp.middleware.setup(LoggingMiddleware())
 
 async def start(message: types.Message):
     user_id = message.from_user.id
@@ -68,13 +65,17 @@ async def cmd_start(message: types.Message):
 async def callback_handler(callback_query: types.CallbackQuery):
     await run_external_script(callback_query)
 
-@dp.message_handler(Command("stop"))
+@dp.message_handler(commands=["stop"])
 async def cmd_stop(message: types.Message):
     await stop_external_script(message)
 
 def main():
     logging.basicConfig(level=logging.INFO)
-    executor.start_polling(dp, skip_updates=True)
+    bot.set_my_commands([
+        types.BotCommand("start", "Memulai bot"),
+        types.BotCommand("stop", "Menghentikan bot")
+    ])
+    bot.polling()
 
 if __name__ == '__main__':
     main()
