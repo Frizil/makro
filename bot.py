@@ -3,7 +3,6 @@ import os
 import subprocess
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
-from aiogram.dispatcher import FSMContext
 from aiogram.dispatcher.filters import Command
 from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
