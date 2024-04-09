@@ -7,7 +7,7 @@ import logging
 
 # Load token from .env file
 load_dotenv()
-TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
+TOKEN = os.getenv('BOT_TOKEN')
 
 # Load allowed users from .env file
 ALLOWED_USERS = os.getenv('ALLOWED_USERS').split(',') if os.getenv('ALLOWED_USERS') else []
