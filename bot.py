@@ -2,10 +2,8 @@ import logging
 import os
 import subprocess
 from dotenv import load_dotenv
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler
-from telegram.ext.filters import Filters
-from queue import Queue
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
 
 load_dotenv()
 
@@ -16,9 +14,8 @@ allowed_users = [5199147926]
 TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = -1002091418219
 running_process = None
-update_queue = Queue()
 
-def start(update, context):
+def start(update: Update, context: CallbackContext):
     user_id = update.effective_user.id
     if user_id in allowed_users:
         keyboard = [
@@ -34,7 +31,7 @@ def start(update, context):
         context.bot.send_message(chat_id=CHANNEL_ID, text=user_info, parse_mode="HTML", disable_web_page_preview=True)
         context.bot.send_message(chat_id=user_id, text="Anda tidak memiliki izin akses bot ini")
 
-def run_external_script(update, context):
+def run_external_script(update: Update, context: CallbackContext):
     global running_process
     query = update.callback_query
     user_id = query.from_user.id
@@ -46,7 +43,7 @@ def run_external_script(update, context):
         except Exception as e:
             query.edit_message_text(text=f"Gagal menjalankan {script_name}. Error: {e}")
 
-def stop_external_script(update, context):
+def stop_external_script(update: Update, context: CallbackContext):
     global running_process
     user_id = update.effective_user.id
     if user_id in allowed_users:
@@ -61,7 +58,7 @@ def stop_external_script(update, context):
         update.message.reply_text("Anda tidak memiliki izin untuk menghentikan bot.")
 
 def main():
-    updater = Updater(TOKEN.strip(), update_queue=update_queue)
+    updater = Updater(TOKEN.strip())
     dp = updater.dispatcher
     
     dp.add_handler(CommandHandler("start", start))
