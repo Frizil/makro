@@ -1,21 +1,17 @@
+import asyncio
 import logging
-import os
-import subprocess
-from dotenv import load_dotenv
-from aiogram import Bot, Dispatcher, types
+import sys
+from os import getenv
 
-load_dotenv()
+from aiogram import Bot, Dispatcher, html
+from aiogram.client.default import DefaultBotProperties
+from aiogram.enums import ParseMode
+from aiogram.filters import CommandStart
+from aiogram.types import Message
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
-logger = logging.getLogger(__name__)
+TOKEN = getenv("TOKEN")
 
-allowed_users = [5199147926]
-TOKEN = os.getenv("TOKEN")
-CHANNEL_ID = -1002091418219
-running_process = None
-
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()
 
 async def start(message: types.Message):
     user_id = message.from_user.id
@@ -68,13 +64,16 @@ async def callback_handler(callback_query: types.CallbackQuery):
 async def cmd_stop(message: types.Message):
     await stop_external_script(message)
 
-def main():
-    logging.basicConfig(level=logging.INFO)
+
+async def main() -> None:
+    bot = Bot(token=TOKEN, default=DefaultBotProperties(parse_mode=ParseMode.HTML))
     bot.set_my_commands([
         types.BotCommand("start", "Memulai bot"),
         types.BotCommand("stop", "Menghentikan bot")
     ])
-    bot.polling()
+    await dp.start_polling(bot)
 
-if __name__ == '__main__':
-    main()
+
+if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO, stream=sys.stdout)
+    asyncio.run(main())
