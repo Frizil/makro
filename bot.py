@@ -2,8 +2,11 @@ import logging
 import os
 import subprocess
 from dotenv import load_dotenv
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters, CallbackContext
+from aiogram import Bot, Dispatcher, types
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import Command
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 
@@ -15,59 +18,64 @@ TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = -1002091418219
 running_process = None
 
-def start(update: Update, context: CallbackContext):
-    user_id = update.effective_user.id
-    if user_id in allowed_users:
-        keyboard = [
-            [InlineKeyboardButton("Slot Ikan", callback_data='slotikan')],
-            [InlineKeyboardButton("Slot Daun", callback_data='slotdaun')],
-            [InlineKeyboardButton("Homes", callback_data='homes')],
-            [InlineKeyboardButton("Homes X", callback_data='homesx')]
-        ]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        update.message.reply_text('Pilih yang ingin dijalankan:', reply_markup=reply_markup)
-    else:
-        user_info = f"Nama: {update.effective_user.full_name}\nUser ID: {user_id}\n<a href='https://t.me/{update.effective_user.username}'>Link Profil</a>"
-        context.bot.send_message(chat_id=CHANNEL_ID, text=user_info, parse_mode="HTML", disable_web_page_preview=True)
-        context.bot.send_message(chat_id=user_id, text="Anda tidak memiliki izin akses bot ini")
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
 
-def run_external_script(update: Update, context: CallbackContext):
-    global running_process
-    query = update.callback_query
-    user_id = query.from_user.id
+async def start(message: types.Message):
+    user_id = message.from_user.id
     if user_id in allowed_users:
-        script_name = query.data
+        keyboard = InlineKeyboardMarkup()
+        keyboard.row(InlineKeyboardButton("Slot Ikan", callback_data='slotikan'),
+                     InlineKeyboardButton("Slot Daun", callback_data='slotdaun'))
+        keyboard.row(InlineKeyboardButton("Homes", callback_data='homes'),
+                     InlineKeyboardButton("Homes X", callback_data='homesx'))
+        await message.reply("Pilih yang ingin dijalankan:", reply_markup=keyboard)
+    else:
+        user_info = f"Nama: {message.from_user.full_name}\nUser ID: {user_id}\n<a href='https://t.me/{message.from_user.username}'>Link Profil</a>"
+        await bot.send_message(chat_id=CHANNEL_ID, text=user_info, parse_mode="HTML", disable_web_page_preview=True)
+        await bot.send_message(chat_id=user_id, text="Anda tidak memiliki izin akses bot ini")
+
+async def run_external_script(callback_query: types.CallbackQuery):
+    global running_process
+    user_id = callback_query.from_user.id
+    if user_id in allowed_users:
+        script_name = callback_query.data
         try:
             running_process = subprocess.Popen(["python", f"{script_name}.py"])
-            query.edit_message_text(text=f"{script_name} telah dijalankan")
+            await callback_query.message.edit_text(text=f"{script_name} telah dijalankan")
         except Exception as e:
-            query.edit_message_text(text=f"Gagal menjalankan {script_name}. Error: {e}")
+            await callback_query.message.edit_text(text=f"Gagal menjalankan {script_name}. Error: {e}")
 
-def stop_external_script(update: Update, context: CallbackContext):
+async def stop_external_script(message: types.Message):
     global running_process
-    user_id = update.effective_user.id
+    user_id = message.from_user.id
     if user_id in allowed_users:
         if running_process is not None:
             running_process.terminate()
-            update.message.reply_text("Bot telah dihentikan")
+            await message.reply("Bot telah dihentikan")
             logger.info("Skrip eksternal dihentikan")
         else:
-            update.message.reply_text("Bot sedang tidak dijalankan")
+            await message.reply("Bot sedang tidak dijalankan")
             logger.warning("Bot sedang tidak dijalankan")
     else:
-        update.message.reply_text("Anda tidak memiliki izin untuk menghentikan bot.")
+        await message.reply("Anda tidak memiliki izin untuk menghentikan bot.")
+
+@dp.message_handler(commands=['start'])
+async def cmd_start(message: types.Message):
+    await start(message)
+
+@dp.callback_query_handler()
+async def callback_handler(callback_query: types.CallbackQuery):
+    await run_external_script(callback_query)
+
+@dp.message_handler(Command("stop"))
+async def cmd_stop(message: types.Message):
+    await stop_external_script(message)
 
 def main():
-    updater = Updater(TOKEN.strip())
-    dp = updater.dispatcher
-    
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CallbackQueryHandler(run_external_script))
-    dp.add_handler(CommandHandler("stop", stop_external_script))
-    
-    updater.start_polling()
-    logger.info("Bot dimulai.")
-    updater.idle()
+    logging.basicConfig(level=logging.INFO)
+    executor.start_polling(dp, skip_updates=True)
 
 if __name__ == '__main__':
     main()
