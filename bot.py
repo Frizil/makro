@@ -61,7 +61,7 @@ async def stop_external_script(message: Message):
 
 
 @dp.message_handler(commands=['start'])
-async def cmd_start(message: types.Message):
+async def cmd_start(message: Message):
     await start(message)
 
 
@@ -71,7 +71,7 @@ async def callback_handler(callback_query: CallbackQuery):
 
 
 @dp.message_handler(commands=["stop"])
-async def cmd_stop(message: types.Message):
+async def cmd_stop(message: Message):
     await stop_external_script(message)
 
 
