@@ -3,8 +3,7 @@ import os
 import subprocess
 from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler, Filters
-
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler
 
 load_dotenv()
 
