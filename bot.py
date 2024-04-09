@@ -1,75 +1,95 @@
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import CallbackContext, CommandHandler, CallbackQueryHandler, Updater
-
-from dotenv import load_dotenv
 import os
 import subprocess
+from dotenv import load_dotenv
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext, MessageHandler, Filters
+import logging
 
+# Load token from .env file
 load_dotenv()
+TOKEN = os.getenv('TELEGRAM_BOT_TOKEN')
 
-TOKEN = os.getenv("TOKEN")
-allowed_users = [5199147926]
-CHANNEL_ID = -1002091418219
-running_process = None
+# Load allowed users from .env file
+ALLOWED_USERS = os.getenv('ALLOWED_USERS').split(',') if os.getenv('ALLOWED_USERS') else []
 
+# Initialize updater and dispatcher
+updater = Updater(token=TOKEN, use_context=True)
+dispatcher = updater.dispatcher
 
-def start(update: Update, context: CallbackContext):
-    user_id = update.effective_user.id
-    if user_id in allowed_users:
+# Set up logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
+
+# Global variable to store running script
+running_script = None
+
+# Dictionary to track which scripts are selected
+selected_scripts = {}
+
+# Handler for /start command
+def start(update, context):
+    user_id = str(update.effective_user.id)
+    if user_id in ALLOWED_USERS:
         keyboard = [
-            [
-                InlineKeyboardButton("Slot Ikan", callback_data='slotikan'),
-                InlineKeyboardButton("Slot Daun", callback_data='slotdaun')
-            ],
-            [
-                InlineKeyboardButton("Homes", callback_data='homes'),
-                InlineKeyboardButton("Homes X", callback_data='homesx')
-            ]
+            [InlineKeyboardButton("homes.py", callback_data="homes.py")],
+            [InlineKeyboardButton("homesx.py", callback_data="homesx.py")],
+            [InlineKeyboardButton("slotikan.py", callback_data="slotikan.py")],
+            [InlineKeyboardButton("slotdaun.py", callback_data="slotdaun.py")]
         ]
         reply_markup = InlineKeyboardMarkup(keyboard)
-        update.message.reply_text("Pilih yang ingin dijalankan:", reply_markup=reply_markup)
+        update.message.reply_text("Pilih script yang ingin dijalankan:", reply_markup=reply_markup)
     else:
-        user_info = f"Nama: {update.effective_user.full_name}\nUser ID: {user_id}\nLink Profil: https://t.me/{update.effective_user.username}"
-        context.bot.send_message(chat_id=CHANNEL_ID, text=user_info, disable_web_page_preview=True)
-        update.message.reply_text("Anda tidak memiliki izin akses bot ini")
+        update.message.reply_text("Maaf, Anda tidak diizinkan untuk menggunakan bot ini.")
 
+# Handler for inline keyboard button callback
+def button(update: Update, context: CallbackContext):
+    query = update.callback_query
+    query.answer()
+    selected_script = query.data
+    selected_scripts[selected_script] = query.message.message_id
+    run_script(query.message, context, selected_script)
+    hide_button(query)
 
-def run_external_script(update: Update, context: CallbackContext):
-    global running_process
-    user_id = update.effective_user.id
-    if user_id in allowed_users:
-        script_name = context.callback_query.data
+# Function to hide button after it's pressed
+def hide_button(query):
+    script_name = query.data
+    message_id = selected_scripts.get(script_name)
+    if message_id:
+        query.message.delete_reply_markup(reply_markup=InlineKeyboardMarkup([]))
+
+# Handler for /stop command
+def stop(update, context):
+    global running_script
+    if running_script:
+        running_script.kill()
+        update.message.reply_text(f"Script {running_script.args} dihentikan")
+        running_script = None
+    else:
+        update.message.reply_text("Tidak ada script yang berjalan")
+
+# Handler for running scripts
+def run_script(message, context, script_name):
+    global running_script
+    if running_script:
+        message.reply_text("Script sedang berjalan. Gunakan /stop untuk menghentikannya.")
+    else:
         try:
-            running_process = subprocess.Popen(["python3", f"{script_name}.py"])  # Ubah 'python' menjadi 'python3'
-            update.callback_query.message.edit_text(text=f"{script_name} telah dijalankan")
-        except Exception as e:
-            update.callback_query.message.edit_text(text=f"Gagal menjalankan {script_name}. Error: {e}")
+            running_script = subprocess.Popen(["python", script_name], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            stdout, stderr = running_script.communicate()
+            if stderr:
+                message.reply_text(f"Error saat menjalankan script: {stderr.decode()}")
+            else:
+                message.reply_text(f"Script {script_name} berhasil dijalankan")
+        except FileNotFoundError:
+            message.reply_text("File script tidak ditemukan")
 
+# Add handlers to dispatcher
+start_handler = CommandHandler('start', start)
+dispatcher.add_handler(start_handler)
 
-def stop_external_script(update: Update, context: CallbackContext):
-    global running_process
-    user_id = update.effective_user.id
-    if user_id in allowed_users:
-        if running_process is not None:
-            running_process.terminate()
-            update.message.reply_text("Bot telah dihentikan")
-        else:
-            update.message.reply_text("Bot sedang tidak dijalankan")
-    else:
-        update.message.reply_text("Anda tidak memiliki izin untuk menghentikan bot.")
+stop_handler = CommandHandler('stop', stop)
+dispatcher.add_handler(stop_handler)
 
+dispatcher.add_handler(CallbackQueryHandler(button))
 
-def main() -> None:
-    updater = Updater(TOKEN)
-    dp = updater.dispatcher
-
-    dp.add_handler(CommandHandler("start", start))
-    dp.add_handler(CallbackQueryHandler(run_external_script))
-    dp.add_handler(CommandHandler("stop", stop_external_script))
-
-    updater.start_polling()
-    updater.idle()
-
-
-if __name__ == "__main__":
-    main()
+updater.start_polling()
