@@ -13,7 +13,8 @@ TOKEN = os.getenv('BOT_TOKEN')
 ALLOWED_USERS = os.getenv('ALLOWED_USERS').split(',') if os.getenv('ALLOWED_USERS') else []
 
 # Initialize updater and dispatcher
-updater = Updater(token=TOKEN, use_context=True)
+updater = Updater(use_context=True)
+updater.bot.set_token(TOKEN)  # Set the bot token here
 dispatcher = updater.dispatcher
 
 # Set up logging
