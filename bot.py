@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import subprocess
 import sys
 from os import getenv
 
