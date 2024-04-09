@@ -4,6 +4,8 @@ import subprocess
 from dotenv import load_dotenv
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup
 from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, MessageHandler
+from telegram.ext.filters import Filters
+from queue import Queue
 
 load_dotenv()
 
@@ -14,6 +16,7 @@ allowed_users = [5199147926]
 TOKEN = os.getenv("TOKEN")
 CHANNEL_ID = -1002091418219
 running_process = None
+update_queue = Queue()
 
 def start(update, context):
     user_id = update.effective_user.id
@@ -56,10 +59,9 @@ def stop_external_script(update, context):
             logger.warning("Bot sedang tidak dijalankan")
     else:
         update.message.reply_text("Anda tidak memiliki izin untuk menghentikan bot.")
-        
 
 def main():
-    updater = Updater(TOKEN.strip())
+    updater = Updater(TOKEN.strip(), update_queue=update_queue)
     dp = updater.dispatcher
     
     dp.add_handler(CommandHandler("start", start))
