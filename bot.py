@@ -18,7 +18,7 @@ running_process = None
 dp = Dispatcher()
 
 
-async def start(message: types.Message):
+async def start(message: Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
         keyboard = types.InlineKeyboardMarkup()
@@ -33,7 +33,7 @@ async def start(message: types.Message):
         await bot.send_message(chat_id=user_id, text="Anda tidak memiliki izin akses bot ini")
 
 
-async def run_external_script(callback_query: types.CallbackQuery):
+async def run_external_script(callback_query: CallbackQuery):
     global running_process
     user_id = callback_query.from_user.id
     if user_id in allowed_users:
@@ -45,7 +45,7 @@ async def run_external_script(callback_query: types.CallbackQuery):
             await callback_query.message.edit_text(text=f"Gagal menjalankan {script_name}. Error: {e}")
 
 
-async def stop_external_script(message: types.Message):
+async def stop_external_script(message: Message):
     global running_process
     user_id = message.from_user.id
     if user_id in allowed_users:
@@ -66,7 +66,7 @@ async def cmd_start(message: types.Message):
 
 
 @dp.callback_query_handler()
-async def callback_handler(callback_query: types.CallbackQuery):
+async def callback_handler(callback_query: CallbackQuery):
     await run_external_script(callback_query)
 
 
