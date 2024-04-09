@@ -59,7 +59,7 @@ def stop_external_script(update, context):
         
 
 def main():
-    updater = Updater(TOKEN.strip(), use_context=True)
+    updater = Updater(TOKEN.strip())
     dp = updater.dispatcher
     
     dp.add_handler(CommandHandler("start", start))
