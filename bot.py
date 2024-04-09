@@ -1,15 +1,17 @@
 import asyncio
 import logging
+import subprocess
 import sys
 from os import getenv
 
-from aiogram import Bot, Dispatcher, html
+from aiogram import Bot, Dispatcher, types
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.filters import CommandStart
-from aiogram.types import Message
 
 TOKEN = getenv("TOKEN")
+allowed_users = [5199147926]
+CHANNEL_ID = -1002091418219  
+running_process = None 
 
 dp = Dispatcher()
 
@@ -28,6 +30,7 @@ async def start(message: types.Message):
         await bot.send_message(chat_id=CHANNEL_ID, text=user_info, parse_mode="HTML", disable_web_page_preview=True)
         await bot.send_message(chat_id=user_id, text="Anda tidak memiliki izin akses bot ini")
 
+
 async def run_external_script(callback_query: types.CallbackQuery):
     global running_process
     user_id = callback_query.from_user.id
@@ -38,6 +41,7 @@ async def run_external_script(callback_query: types.CallbackQuery):
             await callback_query.message.edit_text(text=f"{script_name} telah dijalankan")
         except Exception as e:
             await callback_query.message.edit_text(text=f"Gagal menjalankan {script_name}. Error: {e}")
+
 
 async def stop_external_script(message: types.Message):
     global running_process
@@ -53,13 +57,16 @@ async def stop_external_script(message: types.Message):
     else:
         await message.reply("Anda tidak memiliki izin untuk menghentikan bot.")
 
+
 @dp.message_handler(commands=['start'])
 async def cmd_start(message: types.Message):
     await start(message)
 
+
 @dp.callback_query_handler()
 async def callback_handler(callback_query: types.CallbackQuery):
     await run_external_script(callback_query)
+
 
 @dp.message_handler(commands=["stop"])
 async def cmd_stop(message: types.Message):
