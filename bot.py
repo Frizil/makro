@@ -3,7 +3,6 @@ import os
 import subprocess
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 load_dotenv()
 
@@ -16,17 +15,16 @@ CHANNEL_ID = -1002091418219
 running_process = None
 
 bot = Bot(token=TOKEN)
-dp = Dispatcher()
-dp.setup(bot)
+dp = Dispatcher(bot)
 
 async def start(message: types.Message):
     user_id = message.from_user.id
     if user_id in allowed_users:
-        keyboard = InlineKeyboardMarkup()
-        keyboard.row(InlineKeyboardButton("Slot Ikan", callback_data='slotikan'),
-                     InlineKeyboardButton("Slot Daun", callback_data='slotdaun'))
-        keyboard.row(InlineKeyboardButton("Homes", callback_data='homes'),
-                     InlineKeyboardButton("Homes X", callback_data='homesx'))
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("Slot Ikan", callback_data='slotikan'),
+                     types.InlineKeyboardButton("Slot Daun", callback_data='slotdaun'))
+        keyboard.add(types.InlineKeyboardButton("Homes", callback_data='homes'),
+                     types.InlineKeyboardButton("Homes X", callback_data='homesx'))
         await message.reply("Pilih yang ingin dijalankan:", reply_markup=keyboard)
     else:
         user_info = f"Nama: {message.from_user.full_name}\nUser ID: {user_id}\n<a href='https://t.me/{message.from_user.username}'>Link Profil</a>"
