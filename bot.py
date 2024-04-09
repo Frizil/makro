@@ -8,7 +8,7 @@ from aiogram import Bot, Dispatcher, html
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 from aiogram.filters import CommandStart
-from aiogram.type import Message
+from aiogram.types import Message
 
 TOKEN = getenv("TOKEN")
 allowed_users = [5199147926]
