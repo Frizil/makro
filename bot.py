@@ -3,9 +3,7 @@ import logging
 from dotenv import load_dotenv
 import subprocess
 from aiogram import Bot, Dispatcher, types
-from aiogram.types import ParseMode
 from aiogram.dispatcher import FSMContext
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
 from aiogram.dispatcher.filters.state import State, StatesGroup
 from aiogram.dispatcher.filters import Text
 from aiogram.utils import executor
