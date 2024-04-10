@@ -1,43 +1,77 @@
-import os
-from dotenv import load_dotenv
-from aiogram import Bot, Dispatcher, types
-from aiogram.dispatcher import FSMContext
-from aiogram.dispatcher.filters import CommandStart
-from aiogram.contrib.middlewares.logging import LoggingMiddleware
-from aiogram.contrib.fsm_storage.memory import MemoryStorage
-from aiogram.utils import executor
+import logging
+from telegram import Update
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 import subprocess
 
-load_dotenv()
-TOKEN = os.getenv('BOT_TOKEN')
-ALLOWED_USERS = os.getenv('ALLOWED_USERS', '').split(',')
+# Enable logging
+logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+logger = logging.getLogger(__name__)
 
-bot = Bot(token=TOKEN)
-dp = Dispatcher(bot, storage=MemoryStorage())
+# Define the available scripts
+scripts = {
+    '1': 'homes.py',
+    '2': 'homesx.py',
+    '3': 'slotikan.py',
+    '4': 'slotdaun.py'
+}
 
-async def start(message: types.Message):
-    if str(message.from_user.id) in ALLOWED_USERS:
-        keyboard = types.InlineKeyboardMarkup()
-        keyboard.add(types.InlineKeyboardButton("homes.py", callback_data="homes.py"))
-        keyboard.add(types.InlineKeyboardButton("homesx.py", callback_data="homesx.py"))
-        keyboard.add(types.InlineKeyboardButton("slotikan.py", callback_data="slotikan.py"))
-        keyboard.add(types.InlineKeyboardButton("slotdaun.py", callback_data="slotdaun.py"))
-        await message.reply("Pilih script yang ingin dijalankan:", reply_markup=keyboard)
+# Global variable to hold the running script process
+running_script_process = None
+
+# Start command handler
+def start(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text(f'Hai, {update.effective_user.first_name} ini script yang tersedia\n'
+                              '1. Homes (homes.py)\n'
+                              '2. Homesx (homesx.py)\n'
+                              '3. Slotikan (slotikan.py)\n'
+                              '4. Slotdaun (slotdaun.py)\n'
+                              'Silahkan pilih (1-4):')
+
+# Command handler for selecting and running a script
+def select_script(update: Update, context: CallbackContext) -> None:
+    selected_script = update.message.text.strip()
+
+    if selected_script in scripts:
+        global running_script_process
+        if running_script_process is not None:
+            running_script_process.kill()
+            update.message.reply_text('Script berhasil dihentikan')
+
+        script_name = scripts[selected_script]
+        running_script_process = subprocess.Popen(['python', script_name])
+        update.message.reply_text(f'Script {script_name} berhasil dijalankan')
     else:
-        await message.reply("Maaf, Anda tidak diizinkan untuk menggunakan bot ini.")
+        update.message.reply_text('Maaf, pilihan tidak tersedia. Silahkan pilih kembali (1-4):')
 
-async def button_handler(callback_query: types.CallbackQuery):
-    selected_script = callback_query.data
-    await bot.send_message(callback_query.from_user.id, f"Menjalankan script {selected_script}")
-    subprocess.Popen(["python", selected_script])
+# Stop command handler
+def stop(update: Update, context: CallbackContext) -> None:
+    global running_script_process
+    if running_script_process is not None:
+        running_script_process.kill()
+        update.message.reply_text('Script berhasil dihentikan')
+        running_script_process = None
+    else:
+        update.message.reply_text('Tidak ada script yang dijalankan')
 
-async def stop(message: types.Message):
-    await message.reply("Menghentikan script yang sedang berjalan...")
-    subprocess.run(['pkill', '-f', 'python .*\\.py'])
+def main() -> None:
+    # Create the Updater and pass it your bot's token
+    updater = Updater("TOKEN", use_context=True)
 
-dp.register_message_handler(start, CommandStart())
-dp.register_callback_query_handler(button_handler)
-dp.register_message_handler(stop, commands=['stop'])
+    # Get the dispatcher to register handlers
+    dp = updater.dispatcher
+
+    # Register command handlers
+    dp.add_handler(CommandHandler("start", start))
+    dp.add_handler(MessageHandler(Filters.regex(r'^[1-4]$'), select_script))
+    dp.add_handler(CommandHandler("stop", stop))
+    dp.add_handler(MessageHandler(Filters.text & ~Filters.command, unknown))
+
+    # Start the Bot
+    updater.start_polling()
+    logger.info("Bot is running...")
+
+    # Run the bot until you press Ctrl-C
+    updater.idle()
 
 if __name__ == '__main__':
-    executor.start_polling(dp, skip_updates=True)
+    main()
