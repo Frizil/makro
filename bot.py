@@ -8,7 +8,7 @@ TOKEN = os.getenv('BOT_TOKEN')
 ALLOWED_USERS = os.getenv('ALLOWED_USERS', '').split(',')
 
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()
 
 @dp.message_handler(commands=['start'])
 async def start(message: types.Message):
@@ -36,5 +36,5 @@ async def stop(message: types.Message):
 if __name__ == '__main__':
     import asyncio
     loop = asyncio.get_event_loop()
-    loop.create_task(dp.start_polling())
+    loop.create_task(dp.start_polling(bot=bot))
     loop.run_forever()
