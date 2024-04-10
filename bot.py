@@ -1,6 +1,11 @@
 import os
 from dotenv import load_dotenv
 from aiogram import Bot, Dispatcher, types
+from aiogram.dispatcher import FSMContext
+from aiogram.dispatcher.filters import CommandStart
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.contrib.fsm_storage.memory import MemoryStorage
+from aiogram.utils import executor
 import subprocess
 
 load_dotenv()
@@ -8,7 +13,7 @@ TOKEN = os.getenv('BOT_TOKEN')
 ALLOWED_USERS = os.getenv('ALLOWED_USERS', '').split(',')
 
 bot = Bot(token=TOKEN)
-dp = Dispatcher()
+dp = Dispatcher(bot, storage=MemoryStorage())
 
 async def start(message: types.Message):
     if str(message.from_user.id) in ALLOWED_USERS:
@@ -30,12 +35,9 @@ async def stop(message: types.Message):
     await message.reply("Menghentikan script yang sedang berjalan...")
     subprocess.run(['pkill', '-f', 'python .*\\.py'])
 
-dp.register_message_handler(start, commands=['start'])
+dp.register_message_handler(start, CommandStart())
 dp.register_callback_query_handler(button_handler)
 dp.register_message_handler(stop, commands=['stop'])
 
 if __name__ == '__main__':
-    import asyncio
-    loop = asyncio.get_event_loop()
-    loop.create_task(dp.start_polling())
-    loop.run_forever()
+    executor.start_polling(dp, skip_updates=True)
