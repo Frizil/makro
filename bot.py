@@ -1,53 +1,40 @@
 import os
 from dotenv import load_dotenv
-from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext, MessageHandler
-import logging
+from aiogram import Bot, Dispatcher, types
+from aiogram.contrib.middlewares.logging import LoggingMiddleware
+from aiogram.utils import executor
 import subprocess
 
 load_dotenv()
 TOKEN = os.getenv('BOT_TOKEN')
 ALLOWED_USERS = os.getenv('ALLOWED_USERS', '').split(',')
 
-logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
+bot = Bot(token=TOKEN)
+dp = Dispatcher(bot)
+dp.middleware.setup(LoggingMiddleware())
 
-def start(update: Update, context: CallbackContext) -> None:
-    if str(update.effective_user.id) in ALLOWED_USERS:
-        keyboard = [[InlineKeyboardButton(script, callback_data=script)] for script in ["homes.py", "homesx.py", "slotikan.py", "slotdaun.py"]]
-        reply_markup = InlineKeyboardMarkup(keyboard)
-        update.message.reply_text("Pilih script yang ingin dijalankan:", reply_markup=reply_markup)
+@dp.message_handler(commands=['start'])
+async def start(message: types.Message):
+    if str(message.from_user.id) in ALLOWED_USERS:
+        keyboard = types.InlineKeyboardMarkup()
+        keyboard.add(types.InlineKeyboardButton("homes.py", callback_data="homes.py"))
+        keyboard.add(types.InlineKeyboardButton("homesx.py", callback_data="homesx.py"))
+        keyboard.add(types.InlineKeyboardButton("slotikan.py", callback_data="slotikan.py"))
+        keyboard.add(types.InlineKeyboardButton("slotdaun.py", callback_data="slotdaun.py"))
+        await message.reply("Pilih script yang ingin dijalankan:", reply_markup=keyboard)
     else:
-        update.message.reply_text("Maaf, Anda tidak diizinkan untuk menggunakan bot ini.")
+        await message.reply("Maaf, Anda tidak diizinkan untuk menggunakan bot ini.")
 
-def button(update: Update, context: CallbackContext) -> None:
-    query = update.callback_query
-    selected_script = query.data
-    query.message.reply_text(f"Menjalankan script {selected_script}")
-    run_script(selected_script)
+@dp.callback_query_handler()
+async def button_handler(callback_query: types.CallbackQuery):
+    selected_script = callback_query.data
+    await bot.send_message(callback_query.from_user.id, f"Menjalankan script {selected_script}")
+    subprocess.Popen(["python", selected_script])
 
-def stop(update: Update, context: CallbackContext) -> None:
-    query = update.message
-    query.reply_text("Menghentikan script yang sedang berjalan...")
+@dp.message_handler(commands=['stop'])
+async def stop(message: types.Message):
+    await message.reply("Menghentikan script yang sedang berjalan...")
     subprocess.run(['pkill', '-f', 'python .*\\.py'])
 
-def run_script(script_name: str) -> None:
-    try:
-        subprocess.Popen(["python", script_name])
-    except FileNotFoundError:
-        update.message.reply_text("File script tidak ditemukan")
-
-def main() -> None:
-    bot = Bot(token=TOKEN)
-    updater = Updater(bot=bot)
-
-    dispatcher = updater.dispatcher
-
-    dispatcher.add_handler(CommandHandler("start", start))
-    dispatcher.add_handler(CallbackQueryHandler(button))
-    dispatcher.add_handler(CommandHandler("stop", stop))
-
-    updater.start_polling()
-    updater.idle()
-
 if __name__ == '__main__':
-    main()
+    executor.start_polling(dp, skip_updates=True)
