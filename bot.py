@@ -8,7 +8,7 @@ TOKEN = os.getenv('BOT_TOKEN')
 ALLOWED_USERS = os.getenv('ALLOWED_USERS', '').split(',')
 
 bot = Bot(token=TOKEN)
-dp = Dispatcher(bot)
+dp = Dispatcher()
 
 async def start(message: types.Message):
     if str(message.from_user.id) in ALLOWED_USERS:
