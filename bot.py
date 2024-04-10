@@ -1,7 +1,7 @@
 import os
 from dotenv import load_dotenv
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update, Message
-from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext, MessageHandler
+from telegram import Bot, InlineKeyboardButton, InlineKeyboardMarkup, Update
+from telegram.ext import Updater, CommandHandler, CallbackQueryHandler, CallbackContext, MessageHandler, Filters
 import logging
 import subprocess
 
@@ -37,7 +37,9 @@ def run_script(script_name: str) -> None:
         update.message.reply_text("File script tidak ditemukan")
 
 def main() -> None:
-    updater = Updater(TOKEN)
+    bot = Bot(token=TOKEN)
+    updater = Updater(bot=bot)
+
     dispatcher = updater.dispatcher
 
     dispatcher.add_handler(CommandHandler("start", start))
