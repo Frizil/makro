@@ -10,7 +10,7 @@ load_dotenv()
 
 # Get bot token and allowed user from environment variables
 TOKEN = os.getenv("TOKEN")
-ALLOWED_USER = os.getenv("ALLOWED_USER")
+ALLOWED_USER = os.getenv("ALLOWED_USERS")
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
