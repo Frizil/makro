@@ -1,7 +1,16 @@
+import os
 import logging
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from dotenv import load_dotenv
 import subprocess
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Get bot token and allowed user from environment variables
+TOKEN = os.getenv("TOKEN")
+ALLOWED_USER = os.getenv("ALLOWED_USER")
 
 # Enable logging
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s', level=logging.INFO)
@@ -53,9 +62,13 @@ def stop(update: Update, context: CallbackContext) -> None:
     else:
         update.message.reply_text('Tidak ada script yang dijalankan')
 
+# Unknown command handler
+def unknown(update: Update, context: CallbackContext) -> None:
+    update.message.reply_text('Maaf, perintah tidak dikenali.')
+
 def main() -> None:
     # Create the Updater and pass it your bot's token
-    updater = Updater("TOKEN", use_context=True)
+    updater = Updater(TOKEN, use_context=True)
 
     # Get the dispatcher to register handlers
     dp = updater.dispatcher
